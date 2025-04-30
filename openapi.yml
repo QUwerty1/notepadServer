@@ -1,0 +1,638 @@
+openapi: '3.0.3'
+info:
+  title: Notepad
+  version: '1.2'
+servers:
+  - url: https://api.server.test/v1.2
+paths:
+  /register:
+    post:
+      summary: >-
+        Зарегистрироваться
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/regStruct"
+      responses:
+        "200":
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT
+        "401":
+          description: Пользователь с таким email уже существует
+
+  /login:
+    post:
+      summary: >-
+        Войти по логину и паролю
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/authStruct"
+      
+      responses:
+        "200":
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT
+        "401":
+          description: Неправильный логин или пароль
+
+  /users/{user_id}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      description: >-
+        Получить информацию о пользователе
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /notepads:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получить все блокноты доступные пользователю
+      responses:
+        "200":
+          description: Ок
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/NotepadInfo" }
+        "401":
+          description: Не авторизован
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Добавить новый блокнот
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        "201":
+          description: Создано
+        "400":
+          description: Блокнот с таким названием уже существует
+        "401":
+          description: Не авторизован
+        "403":
+          description: Недостаточно прав
+
+  /notepads/{notepad_id}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получить всю информацию о блокноте
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotepadInfo"
+    delete:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Удалить блокнот
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: ОК
+        "403":
+          description: Недостаточно прав
+
+  /notepads/{notepad_id}/users:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получить пользователей, которым доступен блокнот
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserAccess" }
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Добавить пользователя в блокнот
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAccess"
+      responses:
+        "201":
+          description: Добавлен
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+  /notepads/{notepad_id}/users/{user_id}:
+    put:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Изменить тип доступа пользователя к блокноту
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAccess"
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+    delete:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Удалить пользователя из блокнота
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+
+  /notepads/{notepad_id}/notes:
+    get:
+      summary: >-
+        Получить все заметки в блокноте
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "200":
+          description: Ок
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/NoteInfo" }
+        "401":
+          description: Не авторизован
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Добавить заметку
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        "201":
+          description: Создано
+        "400":
+          description: В этом блокноте уже существует заметка с таким названием
+        "401":
+          description: Не авторизован
+        "403":
+          description: Недостаточно прав
+    
+    put:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Изменить заметку
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Note"
+      responses:
+        "200":
+          description: ОК
+        "400":
+          description: В этом блокноте уже существует заметка с таким названием
+        "403":
+          description: Недостаточно прав
+
+  /notepads/notes/{note_id}:
+    delete:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Удалить заметку
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: ОК
+        "403":
+          description: Недостаточно прав
+
+
+  /notepads/notes/{note_id}/users:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получить пользователей, которым доступна заметка
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserAccess" }
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Добавить пользователя в заметку
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAccess"
+      responses:
+        "201":
+          description: Добавлен
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+  /notepads/notes/{note_id}/users/{user_id}:
+    put:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Изменить тип доступа пользователя к заметке
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAccess"
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Не авторизован
+        "403":
+          description: Не достаточно прав
+
+  /notepads/notes/{note_id}/lock:
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получения блокировки или ее продление для редактирования файла
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Не авторизован
+        "403":
+          description: Файл уже заблокирован
+  /notepads/notes/{note_id}/unlock:
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Снятие блокировки для редактирования файла
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Не авторизован
+        "403":
+          description: Файл не заблокирован или заблокирован другим пользователем
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    authStruct:
+      description: Логин и пароль
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string }
+      required:
+        - email
+        - password
+
+    regStruct:
+      type: object
+      properties:
+        email: { type: string }
+        username: { type: string }
+        password: { type: string }
+      required:
+        - email
+        - username
+        - password
+
+    AccessType:
+      description: >-
+        Типы доступа:
+          * Читатель
+          * Редактор
+          * Админ
+      type: string
+      enum:
+        - reader
+        - editor
+        - admin
+
+    NotepadInfo:
+      description: >-
+        Информация о блокноте с типом доступа пользователя
+      type: object
+      properties:
+        notepad_id: { type: integer }
+        notepad_name: { type: string }
+        created_at: { type: string }
+        updated_at: { type: string }
+        accessType: { $ref: "#/components/schemas/AccessType" }
+      required:
+        - notepad_id
+        - notepad_name
+        - created_at
+        - updated_at
+        - notes_id
+        - accessType
+
+    NoteInfo:
+      description: >-
+        Информация о записке с типом доступа пользователя
+      type: object
+      properties:
+        notepad_id: { type: integer }
+        notepad_name: { type: string }
+        created_at: { type: string }
+        updated_at: { type: string }
+        accessType: { $ref: "#/components/schemas/AccessType" }
+        content: { $ref: "#/components/schemas/Note" }
+      required:
+        - notepad_id
+        - notepad_name
+        - created_at
+        - updated_at
+        - accessType
+
+    NoteEvent:
+      description: >-
+        Событие календаря
+      properties:
+        title: { type: string }
+        time: { type: string }
+        description: { type: string }
+      required:
+        - title
+        - time
+        - description
+
+    NoteCalendarEvent:
+      description: >-
+        Коллекция событий календаря
+      type: object
+      properties:
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/NoteEvent" }
+      required:
+        - events
+    
+    AbstractNote:
+      description: Абстрактное содержимое заметки
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type:
+          type: string
+          enum: [ "text", "calendar", "table" ]
+      required:
+        - id
+        - name
+        - type
+
+    TextNote:
+      description: Поля текстовой заметки
+      type: object
+      properties:
+        text: { type: string }
+      required:
+        - text
+
+    TableNote:
+      description: Поля табличной заметки
+      type: object
+      properties:
+        columnNames:
+          type: array
+          items: { type: string }
+        cells:
+          type: array
+          items:
+            type: array
+            items: { type: string }
+      required:
+        - columnNames
+        - cells
+    
+    CalendarNote:
+      description: Поля календарной заметки
+      type: object
+      properties:
+        calendarEvents:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/NoteCalendarEvent" }
+      required:
+        - calendarEvents
+
+    Note:
+      description: >-
+        Содержимое заметки
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/AbstractNote"
+      oneOf:
+        - $ref: "#/components/schemas/TableNote"
+        - $ref: "#/components/schemas/TextNote"
+        - $ref: "#/components/schemas/CalendarNote"
+
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+      required:
+        - id
+        - name
+        - email
+
+    UserAccess:
+      type: object
+      properties:
+        user_id: { type: integer }
+        access_type: { $ref: "#/components/schemas/AccessType" }
+      required:
+        - user_id
+        - username
+        - access_type
