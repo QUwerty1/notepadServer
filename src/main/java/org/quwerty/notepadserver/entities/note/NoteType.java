@@ -1,4 +1,4 @@
-package org.quwerty.notepadserver.domain.entity.note;
+package org.quwerty.notepadserver.entities.note;
 
 public enum NoteType {
     Text,

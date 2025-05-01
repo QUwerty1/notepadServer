@@ -1,8 +1,16 @@
-package org.quwerty.notepadserver.domain.entity.user;
+package org.quwerty.notepadserver.entities.user;
 
 import jakarta.persistence.*;
-import org.quwerty.notepadserver.domain.entity.note.Note;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.quwerty.notepadserver.entities.note.Note;
 
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "user_note_access")
 public class UserNoteAccess {
@@ -21,24 +29,4 @@ public class UserNoteAccess {
     @Enumerated(EnumType.STRING)
     @Column(name = "access_type", nullable = false)
     private AccessType accessType;
-
-    public int getId() {
-        return id;
-    }
-
-    public Note getNote() {
-        return note;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public AccessType getAccessType() {
-        return accessType;
-    }
-
-    public void setAccessType(AccessType accessType) {
-        this.accessType = accessType;
-    }
 }

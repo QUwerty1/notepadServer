@@ -1,4 +1,4 @@
-package org.quwerty.notepadserver.domain.entity;
+package org.quwerty.notepadserver.entities;
 
 public enum AccessType {
     Reader,

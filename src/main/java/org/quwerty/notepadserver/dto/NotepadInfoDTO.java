@@ -1,13 +1,12 @@
 package org.quwerty.notepadserver.dto;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
+import java.util.List;
 
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,5 +16,6 @@ public class NotepadInfoDTO {
     String notepadName;
     Timestamp createdAt;
     Timestamp updatedAt;
-    AccessTypeDTO accessType;
+    String accessType;
+    List<Integer> note_ids;
 }

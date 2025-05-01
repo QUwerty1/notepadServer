@@ -1,20 +1,19 @@
-package org.quwerty.notepadserver.domain.entity.note;
+package org.quwerty.notepadserver.entities.note;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.quwerty.notepadserver.domain.entity.Notepad;
-import org.quwerty.notepadserver.domain.entity.user.User;
-import org.quwerty.notepadserver.domain.entity.user.UserNoteAccess;
+import org.quwerty.notepadserver.entities.Notepad;
+import org.quwerty.notepadserver.entities.user.User;
+import org.quwerty.notepadserver.entities.user.UserNoteAccess;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "notes")

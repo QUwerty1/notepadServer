@@ -1,11 +1,9 @@
 package org.quwerty.notepadserver.dto;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+@Builder
 @Getter
 @Setter(AccessLevel.PACKAGE)
 @AllArgsConstructor

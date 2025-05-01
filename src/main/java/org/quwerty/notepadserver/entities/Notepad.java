@@ -1,14 +1,20 @@
-package org.quwerty.notepadserver.domain.entity;
+package org.quwerty.notepadserver.entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.quwerty.notepadserver.domain.entity.user.User;
-import org.quwerty.notepadserver.domain.entity.user.UserNotepadAccess;
+import org.quwerty.notepadserver.entities.note.Note;
+import org.quwerty.notepadserver.entities.user.User;
+import org.quwerty.notepadserver.entities.user.UserNotepadAccess;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "notepads")
 public class Notepad {
@@ -29,56 +35,21 @@ public class Notepad {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_notepad_access_id")
-    private List<UserNotepadAccess> accessors;
+    private List<UserNotepadAccess> accessors = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "owned_by_id")
     private User owner;
 
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Note> notes = new ArrayList<>();
+
     public Notepad() {}
     public Notepad(String name, User owner) {
         this.name = name;
         this.owner = owner;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public List<UserNotepadAccess> getAccessors() {
-        return accessors;
-    }
-
-    public void setAccessors(List<UserNotepadAccess> accessors) {
-        this.accessors = accessors;
+        this.accessors = new ArrayList<>();
+        this.accessors.add(new UserNotepadAccess(this, owner, AccessType.Admin));
     }
 
     @Override

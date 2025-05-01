@@ -1,15 +1,12 @@
-package org.quwerty.notepadserver.domain.entity.note;
+package org.quwerty.notepadserver.entities.note;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.quwerty.notepadserver.domain.entity.Notepad;
-import org.quwerty.notepadserver.domain.entity.user.User;
+import org.quwerty.notepadserver.entities.Notepad;
+import org.quwerty.notepadserver.entities.user.User;
 
 import java.util.ArrayList;
 import java.util.List;
