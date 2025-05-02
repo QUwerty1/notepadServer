@@ -1,7 +1,9 @@
 package org.quwerty.notepadserver.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.quwerty.notepadserver.dto.NameDTO;
 import org.quwerty.notepadserver.dto.NotepadInfoDTO;
+import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 import org.quwerty.notepadserver.entities.note.Note;
 import org.quwerty.notepadserver.entities.user.User;
@@ -9,6 +11,7 @@ import org.quwerty.notepadserver.entities.user.UserNoteAccess;
 import org.quwerty.notepadserver.entities.user.UserNotepadAccess;
 import org.quwerty.notepadserver.repositories.NotepadRepo;
 import org.quwerty.notepadserver.repositories.UserRepo;
+import org.quwerty.notepadserver.services.NotepadService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,7 @@ public class NotepadController {
 
     private final NotepadRepo notepadRepo;
     private final UserRepo userRepo;
+    private final NotepadService notepadService;
 
     @GetMapping("")
     public ResponseEntity<List<NotepadInfoDTO>> getAllByUser(Principal principal) {
@@ -43,14 +47,14 @@ public class NotepadController {
     }
 
     @PostMapping("")
-    public ResponseEntity<?> createNotepad(@RequestBody String name, Principal principal) {
-        if (notepadRepo.findNotepadByName(name).isPresent()) {
+    public ResponseEntity<?> createNotepad(@RequestBody NameDTO name, Principal principal) {
+        if (notepadRepo.findNotepadByName(name.getName()).isPresent()) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 
         } else {
             User user = userRepo.findByUsername(principal.getName()).get();
             Notepad notepad = new Notepad(
-                    name, user);
+                    name.getName(), user);
 
             notepadRepo.save(notepad);
             return new ResponseEntity<>(new NotepadInfoDTO(
@@ -58,13 +62,7 @@ public class NotepadController {
                     notepad.getName(),
                     notepad.getCreatedAt(),
                     notepad.getUpdatedAt(),
-                    notepad.getAccessors()
-                            .stream()
-                            .filter(au -> au.getUser() == user)
-                            .toList()
-                            .getFirst()
-                            .getAccessType()
-                            .toString(),
+                    notepadService.getUserAccess(notepad, user).toString(),
                     List.of()
             ), HttpStatus.CREATED);
         }
@@ -85,13 +83,7 @@ public class NotepadController {
                     notepad.getName(),
                     notepad.getCreatedAt(),
                     notepad.getUpdatedAt(),
-                    notepad.getAccessors()
-                            .stream()
-                            .filter(au -> au.getUser() == user)
-                            .toList()
-                            .getFirst()
-                            .getAccessType()
-                            .toString(),
+                    notepadService.getUserAccess(notepad, user).toString(),
                     notepad.getNotes()
                             .stream()
                             .map(Note::getId)
@@ -103,7 +95,24 @@ public class NotepadController {
     }
 
     @DeleteMapping("/{notepad_id}")
-    public ResponseEntity<?> deleteNotepad(@PathVariable("notepad_id") int notepadId) {
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteNotepad(
+            @PathVariable("notepad_id") int notepadId,
+            Principal principal
+    ) {
+        var optNotepad = notepadRepo.findNotepadById(notepadId);
+        User user = userRepo.findByUsername(principal.getName()).get();
+        if (
+                optNotepad.isPresent() &&
+                        notepadService.getUserAccess(optNotepad.get(), user) == AccessType.Admin
+        ) {
+            Notepad notepad = optNotepad.get();
+            notepadRepo.delete(notepad);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else if (optNotepad.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
     }
 }

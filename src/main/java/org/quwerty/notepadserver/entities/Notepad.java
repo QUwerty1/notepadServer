@@ -33,7 +33,7 @@ public class Notepad {
     @Column(name = "updated_at", nullable = false)
     private Timestamp updatedAt;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "user_notepad_access_id")
     private List<UserNotepadAccess> accessors = new ArrayList<>();
 
@@ -41,7 +41,7 @@ public class Notepad {
     @JoinColumn(name = "owned_by_id")
     private User owner;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Note> notes = new ArrayList<>();
 
     public Notepad() {}

@@ -26,11 +26,11 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "user_note_access_id")
     private List<UserNoteAccess> notes;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "user_notepad_access_id")
     private List<UserNotepadAccess> notepads = new ArrayList<>();
 
