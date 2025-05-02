@@ -2,6 +2,7 @@ package org.quwerty.notepadserver.entities.note;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.quwerty.notepadserver.entities.Notepad;
@@ -16,56 +17,34 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "notes")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    int id;
 
-    @Setter
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(nullable = false, unique = true)
+    String name;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Timestamp createdAt;
+    Timestamp createdAt;
 
     @UpdateTimestamp
-    @Column(name = "Updated_at", nullable = false)
-    private Timestamp updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    Timestamp updatedAt;
 
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    private User owner;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    User owner;
 
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "locked_by_user_id")
-    private User lockedBy;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    User lockedBy;
 
-    @Setter
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "notepad_id")
-    private Notepad notepad;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    Notepad notepad;
 
-    @Setter
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_note_access_id")
-    private List<UserNoteAccess> accessors = new ArrayList<>();
-
-    public Note(Notepad notepad, String name, User owner) {
-        this.notepad = notepad;
-        this.name = name;
-        this.owner = owner;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof Note note) {
-            return id == note.id;
-        }
-        return false;
-    }
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<UserNoteAccess> accessors = new ArrayList<>();
 }

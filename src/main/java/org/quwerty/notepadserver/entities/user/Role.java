@@ -2,20 +2,19 @@ package org.quwerty.notepadserver.entities.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "roles")
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    int id;
 
-    private String name;
-
-    public Role(String name) {
-        this.name = name;
-    }
+    @Column(nullable = false)
+    String name;
 }

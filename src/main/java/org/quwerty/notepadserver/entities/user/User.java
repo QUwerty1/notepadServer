@@ -1,10 +1,10 @@
 package org.quwerty.notepadserver.entities.user;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.quwerty.notepadserver.entities.Notepad;
+import org.quwerty.notepadserver.entities.note.Note;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,47 +13,33 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    int id;
 
     @Column(unique = true, nullable = false)
-    private String username;
+    String username;
 
     @Column(nullable = false)
-    private String email;
+    String email;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "user_note_access_id")
-    private List<UserNoteAccess> notes;
+    @Column(nullable = false)
+    String password;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "user_notepad_access_id")
-    private List<UserNotepadAccess> notepads = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<UserNoteAccess> notes = new ArrayList<>();
 
-    private String password;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<UserNotepadAccess> notepads = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "users_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
     )
-    private List<Role> roles;
-
-    public User(String username, String email) {
-        this.username = username;
-        this.email = email;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof User user) {
-            return user.id == this.id;
-        }
-        return false;
-    }
+    List<Role> roles = new ArrayList<>();
 }

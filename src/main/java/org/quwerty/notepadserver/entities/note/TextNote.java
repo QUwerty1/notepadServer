@@ -1,7 +1,9 @@
 package org.quwerty.notepadserver.entities.note;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.quwerty.notepadserver.entities.Notepad;
 import org.quwerty.notepadserver.entities.user.User;
 
@@ -9,11 +11,9 @@ import org.quwerty.notepadserver.entities.user.User;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity(name = "text_notes")
 public class TextNote extends Note {
-    private String text = "";
-
-      public TextNote(Notepad notepad, String name, User owner) {
-        super(notepad, name, owner);
-    }
+    @Column(nullable = false)
+    String text;
 }

@@ -1,37 +1,34 @@
 package org.quwerty.notepadserver.entities.user;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 
 @NoArgsConstructor
 @Getter
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "user_notepad_access")
 public class UserNotepadAccess {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    int id;
 
-    @Setter
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "notepad_id")
-    private Notepad notepad;
-
-    @Getter
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @Setter
+    @Column(name = "access_type")
     @Enumerated(EnumType.STRING)
-    @Column(name = "access_type", nullable = false)
-    private AccessType accessType;
+    AccessType accessType;
 
-    public UserNotepadAccess(Notepad notepad, User user, org.quwerty.notepadserver.entities.AccessType accessType) {
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    Notepad notepad;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    User user;
+
+    public UserNotepadAccess(Notepad notepad, User user, AccessType accessType) {
         this.notepad = notepad;
         this.user = user;
         this.accessType = accessType;
