@@ -37,14 +37,18 @@ public abstract class Note {
     Timestamp updatedAt;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
     User owner;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "locked_by_id")
     User lockedBy;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "notepad_id")
     Notepad notepad;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "note_id")
     List<UserNoteAccess> accessors = new ArrayList<>();
 }

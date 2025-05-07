@@ -3,21 +3,24 @@ package org.quwerty.notepadserver.controllers;
 import lombok.RequiredArgsConstructor;
 import org.quwerty.notepadserver.dto.NameDTO;
 import org.quwerty.notepadserver.dto.NotepadInfoDTO;
+import org.quwerty.notepadserver.dto.UserAccessDTO;
 import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
-import org.quwerty.notepadserver.entities.note.Note;
 import org.quwerty.notepadserver.entities.user.User;
-import org.quwerty.notepadserver.entities.user.UserNoteAccess;
-import org.quwerty.notepadserver.entities.user.UserNotepadAccess;
+import org.quwerty.notepadserver.exceptions.ForbiddenException;
+import org.quwerty.notepadserver.exceptions.NoSuchNotepadException;
+import org.quwerty.notepadserver.exceptions.NoSuchUserException;
+import org.quwerty.notepadserver.exceptions.NotepadAlreadyExistsException;
 import org.quwerty.notepadserver.repositories.NotepadRepo;
 import org.quwerty.notepadserver.repositories.UserRepo;
 import org.quwerty.notepadserver.services.NotepadService;
+import org.quwerty.notepadserver.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -26,46 +29,42 @@ import java.util.List;
 public class NotepadController {
 
     private final NotepadRepo notepadRepo;
-    private final UserRepo userRepo;
     private final NotepadService notepadService;
+    private final UserService userService;
+    private final UserRepo userRepo;
 
     @GetMapping("")
     public ResponseEntity<List<NotepadInfoDTO>> getAllByUser(Principal principal) {
-        return ResponseEntity.ok(userRepo
-                .findByUsername(principal.getName())
-                .get()
-                .getNotepads()
-                .stream()
-                .map(n -> NotepadInfoDTO.builder()
-                        .notepadId(n.getNotepad().getId())
-                        .notepadName(n.getNotepad().getName())
-                        .createdAt(n.getNotepad().getCreatedAt())
-                        .updatedAt(n.getNotepad().getUpdatedAt())
-                        .accessType(n.getAccessType().toString())
-                        .build()
-                ).toList());
+        try {
+            var user = userService.findByPrincipal(principal);
+            return ResponseEntity.ok(user
+                    .getNotepads()
+                    .stream()
+                    .map(una -> notepadService.toNotepadInfoDTO(
+                            una.getNotepad(),
+                            una.getAccessType()))
+                    .toList());
+
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 
     @PostMapping("")
     public ResponseEntity<?> createNotepad(@RequestBody NameDTO name, Principal principal) {
-        if (notepadRepo.findNotepadByName(name.getName()).isPresent()) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        try {
+            var user = userService.findByPrincipal(principal);
+            Notepad notepad = notepadService.createNotepad(name.getName(), user);
+            return new ResponseEntity<>(
+                    notepadService.toNotepadInfoDTO(notepad, AccessType.Admin),
+                    HttpStatus.CREATED);
 
-        } else {
-            User user = userRepo.findByUsername(principal.getName()).get();
-            Notepad notepad = new Notepad(
-                    name.getName(), user);
-
-            notepadRepo.save(notepad);
-            return new ResponseEntity<>(new NotepadInfoDTO(
-                    notepad.getId(),
-                    notepad.getName(),
-                    notepad.getCreatedAt(),
-                    notepad.getUpdatedAt(),
-                    notepadService.getUserAccess(notepad, user).toString(),
-                    List.of()
-            ), HttpStatus.CREATED);
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (NotepadAlreadyExistsException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
+
     }
 
 
@@ -74,23 +73,21 @@ public class NotepadController {
             @PathVariable("notepad_id") int notepadId,
             Principal principal
     ) {
-        User user = userRepo.findByUsername(principal.getName()).get();
-        var optNotepad = notepadRepo.findNotepadById(notepadId);
-        if (optNotepad.isPresent()) {
-            Notepad notepad = optNotepad.get();
-            return ResponseEntity.ok(new NotepadInfoDTO(
-                    notepad.getId(),
-                    notepad.getName(),
-                    notepad.getCreatedAt(),
-                    notepad.getUpdatedAt(),
-                    notepadService.getUserAccess(notepad, user).toString(),
-                    notepad.getNotes()
-                            .stream()
-                            .map(Note::getId)
-                            .toList()
-            ));
-        } else {
+        try {
+            User user = userService.findByPrincipal(principal);
+            Notepad notepad = notepadRepo.findNotepadById(notepadId)
+                    .orElseThrow(NoSuchNotepadException::new);
+
+            return ResponseEntity.ok(notepadService.toNotepadInfoDTO(
+                    notepad,
+                    notepadService.getUserAccess(notepad, user)
+                            .orElseThrow(ForbiddenException::new)));
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (NoSuchNotepadException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (ForbiddenException e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -99,20 +96,75 @@ public class NotepadController {
             @PathVariable("notepad_id") int notepadId,
             Principal principal
     ) {
-        var optNotepad = notepadRepo.findNotepadById(notepadId);
-        User user = userRepo.findByUsername(principal.getName()).get();
-        if (
-                optNotepad.isPresent() &&
-                        notepadService.getUserAccess(optNotepad.get(), user) == AccessType.Admin
-        ) {
-            Notepad notepad = optNotepad.get();
-            notepadRepo.delete(notepad);
+        try {
+            Notepad notepad = notepadRepo.findNotepadById(notepadId)
+                    .orElseThrow(NoSuchNotepadException::new);
+            User user = userService.findByPrincipal(principal);
+            notepadService.deleteNotepad(notepad, user);
 
             return new ResponseEntity<>(HttpStatus.OK);
-        } else if (optNotepad.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (ForbiddenException e) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        } catch (NoSuchNotepadException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/{notepad_id}/users")
+    public ResponseEntity<?> getUsersFromNotepad(
+            @PathVariable int notepad_id,
+            Principal principal
+    ) {
+        try {
+            User user = userService.findByPrincipal(principal);
+            Notepad notepad = notepadRepo.findNotepadById(notepad_id)
+                    .orElseThrow(NoSuchNotepadException::new);
+            if (notepadService.getUserAccess(notepad, user).isPresent()) {
+
+                return new ResponseEntity<>(notepad.getAccessors()
+                        .stream()
+                        .map(una -> new UserAccessDTO(
+                                una.getUser().getId(),
+                                una.getAccessType().toString()
+                        ))
+                        .toList(), HttpStatus.OK);
+
+            } else {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (NoSuchNotepadException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/{notepad_id}/users")
+    public ResponseEntity<?> addUserToNotepad(
+            @PathVariable int notepad_id,
+            Principal principal,
+            @RequestBody UserAccessDTO userAccessDTO
+    ) {
+        try {
+            User actionist = userService.findByPrincipal(principal);
+            User subject = userRepo.findById(userAccessDTO.getUserId())
+                    .orElseThrow(NoSuchUserException::new);
+            Notepad notepad = notepadRepo.findNotepadById(notepad_id)
+                    .orElseThrow(NoSuchNotepadException::new);
+            notepadService.addUserAccess(notepad, actionist, subject,
+                    AccessType.valueOf(userAccessDTO.getAccessType()));
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (ForbiddenException e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        } catch (NoSuchUserException | NoSuchNotepadException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.quwerty.notepadserver.entities.note.calendar;
+package org.quwerty.notepadserver.utils.calendar;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

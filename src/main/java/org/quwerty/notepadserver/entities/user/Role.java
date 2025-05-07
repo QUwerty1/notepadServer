@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Collection;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,4 +19,6 @@ public class Role {
 
     @Column(nullable = false)
     String name;
+    @ManyToMany(mappedBy = "roles")
+    private Collection<User> users;
 }

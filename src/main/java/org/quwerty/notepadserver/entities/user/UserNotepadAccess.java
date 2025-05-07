@@ -23,9 +23,11 @@ public class UserNotepadAccess {
     AccessType accessType;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "notepad_id")
     Notepad notepad;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "user_id")
     User user;
 
     public UserNotepadAccess(Notepad notepad, User user, AccessType accessType) {

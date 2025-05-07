@@ -7,9 +7,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.quwerty.notepadserver.entities.Notepad;
-import org.quwerty.notepadserver.entities.note.calendar.CalendarEvent;
-import org.quwerty.notepadserver.entities.user.User;
+import org.quwerty.notepadserver.utils.calendar.CalendarEvent;
 
 import java.sql.Date;
 import java.util.HashMap;
