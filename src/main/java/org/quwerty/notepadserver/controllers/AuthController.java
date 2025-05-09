@@ -48,7 +48,6 @@ public class AuthController {
                     HttpStatus.UNAUTHORIZED);
         }
         userService.createUser(rs);
-
         UserDetails userDetails = userService.loadUserByUsername(rs.getUsername());
 
         return new ResponseEntity<>(new JwtTokenDTO(jwtTokenUtil.generateToken(userDetails)),

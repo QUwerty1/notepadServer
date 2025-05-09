@@ -8,6 +8,7 @@ import org.quwerty.notepadserver.entities.note.Note;
 
 @Data
 @Builder
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

@@ -7,17 +7,13 @@ import org.quwerty.notepadserver.dto.UserAccessDTO;
 import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 import org.quwerty.notepadserver.entities.user.User;
-import org.quwerty.notepadserver.exceptions.ForbiddenException;
-import org.quwerty.notepadserver.exceptions.NoSuchNotepadException;
-import org.quwerty.notepadserver.exceptions.NoSuchUserException;
-import org.quwerty.notepadserver.exceptions.NotepadAlreadyExistsException;
+import org.quwerty.notepadserver.exceptions.*;
 import org.quwerty.notepadserver.repositories.NotepadRepo;
 import org.quwerty.notepadserver.repositories.UserRepo;
 import org.quwerty.notepadserver.services.NotepadService;
 import org.quwerty.notepadserver.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -45,7 +41,7 @@ public class NotepadController {
                             una.getAccessType()))
                     .toList());
 
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
@@ -59,7 +55,7 @@ public class NotepadController {
                     notepadService.toNotepadInfoDTO(notepad, AccessType.Admin),
                     HttpStatus.CREATED);
 
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (NotepadAlreadyExistsException e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -82,7 +78,7 @@ public class NotepadController {
                     notepad,
                     notepadService.getUserAccess(notepad, user)
                             .orElseThrow(ForbiddenException::new)));
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (NoSuchNotepadException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,7 +99,7 @@ public class NotepadController {
             notepadService.deleteNotepad(notepad, user);
 
             return new ResponseEntity<>(HttpStatus.OK);
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (ForbiddenException e) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -134,7 +130,7 @@ public class NotepadController {
             } else {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (NoSuchNotepadException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -157,14 +153,73 @@ public class NotepadController {
                     AccessType.valueOf(userAccessDTO.getAccessType()));
 
             return new ResponseEntity<>(HttpStatus.OK);
-        } catch (UsernameNotFoundException e) {
+        } catch (UnauthorizedException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (ForbiddenException e) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        } catch (NoSuchUserException | NoSuchNotepadException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (NoSuchUserException e) {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        } catch (NoSuchNotepadException e) {
+            return new ResponseEntity<>("Notepad not found", HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PutMapping("/{notepad_id}/users/{user_id}")
+    public ResponseEntity<?> updateUserNotepadAccess(
+            @PathVariable int notepad_id,
+            @PathVariable int user_id,
+            @RequestBody UserAccessDTO userAccessDTO,
+            Principal principal
+    ) {
+        try {
+            User actionist = userService.findByPrincipal(principal);
+            User subject = userRepo.findById(user_id)
+                    .orElseThrow(NoSuchUserException::new);
+            Notepad notepad = notepadRepo.findNotepadById(notepad_id)
+                    .orElseThrow(NoSuchNotepadException::new);
+            notepadService.changeUserAccess(
+                    notepad,
+                    actionist,
+                    subject,
+                    AccessType.valueOf(userAccessDTO.getAccessType()));
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (UnauthorizedException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (ForbiddenException e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        } catch (NoSuchUserException e) {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        } catch (NoSuchNotepadException e) {
+            return new ResponseEntity<>("Notepad not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/{notepad_id}/users/{user_id}")
+    public ResponseEntity<?> deleteUserFromNotepad(
+            @PathVariable int notepad_id,
+            @PathVariable int user_id,
+            Principal principal
+    ) {
+        try {
+            User actionist = userService.findByPrincipal(principal);
+            User subject = userRepo.findById(user_id)
+                    .orElseThrow(NoSuchUserException::new);
+            Notepad notepad = notepadRepo.findNotepadById(notepad_id)
+                    .orElseThrow(NoSuchNotepadException::new);
+            notepadService.deleteUserFromNotepad(notepad, actionist, subject);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (UnauthorizedException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (ForbiddenException e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        } catch (NoSuchUserException e) {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        } catch (NoSuchNotepadException e) {
+            return new ResponseEntity<>("Notepad not found", HttpStatus.NOT_FOUND);
         }
     }
 }

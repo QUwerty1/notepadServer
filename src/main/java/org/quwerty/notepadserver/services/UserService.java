@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.quwerty.notepadserver.dto.RegStructDTO;
 import org.quwerty.notepadserver.entities.user.User;
+import org.quwerty.notepadserver.exceptions.UnauthorizedException;
 import org.quwerty.notepadserver.exceptions.UserAlreadyExistsException;
 import org.quwerty.notepadserver.repositories.UserRepo;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,7 +34,7 @@ public class UserService implements UserDetailsService {
             return user.get();
         }
         else {
-            throw new UsernameNotFoundException(principal.getName());
+            throw new UnauthorizedException(principal.getName());
         }
     }
 

@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 
 @NoArgsConstructor
 @Getter
+@Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "user_notepad_access")

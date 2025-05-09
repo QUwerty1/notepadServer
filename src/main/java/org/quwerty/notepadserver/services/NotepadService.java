@@ -10,6 +10,7 @@ import org.quwerty.notepadserver.entities.user.UserNotepadAccess;
 import org.quwerty.notepadserver.exceptions.ForbiddenException;
 import org.quwerty.notepadserver.exceptions.NotepadAlreadyExistsException;
 import org.quwerty.notepadserver.repositories.NotepadRepo;
+import org.quwerty.notepadserver.repositories.UserNotepadAccessRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class NotepadService {
 
     private final NotepadRepo notepadRepo;
+    private final UserNotepadAccessRepo userNotepadAccessRepo;
 
     /**
      * @param notepad Блокнот, к которому проверяется доступ
@@ -88,23 +90,78 @@ public class NotepadService {
     }
 
     /**
-     * @param notepad Блокнот, куда добавляется пользователь
-     * @param actionist Пользователь, который добавляет
-     * @param subject Пользователь, которого добавляют
+     * @param notepad    Блокнот, куда добавляется пользователь
+     * @param actionist  Пользователь, который добавляет
+     * @param subject    Пользователь, которого добавляют
      * @param accessType Тип доступа
      * @throws ForbiddenException subject уже добавлен или actionist
-     * не является админом данного блокнота
+     *                            не является админом данного блокнота
      */
     public void addUserAccess(Notepad notepad, User actionist, User subject, AccessType accessType)
-    throws ForbiddenException {
+            throws ForbiddenException {
         var optActionistAccess = getUserAccess(notepad, actionist);
         if (getUserAccess(notepad, subject).isPresent() ||
                 optActionistAccess.isPresent() &&
-                optActionistAccess.get() != AccessType.Admin) {
+                        optActionistAccess.get() != AccessType.Admin) {
 
             throw new ForbiddenException();
         }
         notepad.getAccessors().add(new UserNotepadAccess(notepad, subject, accessType));
         notepadRepo.save(notepad);
+    }
+
+    /**
+     * @param notepad    Блокнот, тип доступа к которому изменяется
+     * @param actionist  Пользователь, изменяющий тип доступа
+     * @param subject    Пользователь, чей тип доступа изменяют
+     * @param accessType Тип доступа
+     * @throws ForbiddenException subject не существует или actionist
+     *                            не является админом данного блокнота
+     */
+    public void changeUserAccess(
+            Notepad notepad,
+            User actionist,
+            User subject,
+            AccessType accessType
+    ) throws ForbiddenException {
+
+        var optActionistAccess = getUserAccess(notepad, actionist);
+        if (getUserAccess(notepad, subject).isEmpty() ||
+                optActionistAccess.isPresent() &&
+                        optActionistAccess.get() != AccessType.Admin) {
+
+            throw new ForbiddenException();
+        }
+        UserNotepadAccess una = userNotepadAccessRepo
+                .findByUserAndNotepad(subject, notepad)
+                .orElseThrow(ForbiddenException::new);
+        una.setAccessType(accessType);
+
+        userNotepadAccessRepo.save(una);
+    }
+
+    /**
+     * @param notepad   Блокнот
+     * @param actionist Пользователь, который удаляет
+     * @param subject   Пользователь, которого удаляют
+     * @throws ForbiddenException actionist не является админом
+     *                            данного блокнота или subject не существует
+     */
+    public void deleteUserFromNotepad(
+            Notepad notepad,
+            User actionist,
+            User subject
+    ) throws ForbiddenException {
+        var optActionistAccess = getUserAccess(notepad, actionist);
+        if (getUserAccess(notepad, subject).isEmpty() ||
+                optActionistAccess.isPresent() &&
+                        optActionistAccess.get() != AccessType.Admin) {
+
+            throw new ForbiddenException();
+        }
+        userNotepadAccessRepo.delete(userNotepadAccessRepo
+                .findByUserAndNotepad(subject, notepad)
+                .orElseThrow(ForbiddenException::new)
+        );
     }
 }
