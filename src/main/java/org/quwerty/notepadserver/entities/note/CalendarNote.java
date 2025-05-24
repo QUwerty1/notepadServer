@@ -7,6 +7,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.quwerty.notepadserver.entities.Notepad;
+import org.quwerty.notepadserver.entities.user.User;
 import org.quwerty.notepadserver.utils.calendar.CalendarEvent;
 
 import java.sql.Date;
@@ -24,4 +26,8 @@ public class CalendarNote extends Note {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "calendar_events")
     Map<Date, CalendarEvent> calendarEvents = new HashMap<>();
+
+    public CalendarNote(Notepad notepad, User user, String name) {
+        super(notepad, user, name);
+    }
 }

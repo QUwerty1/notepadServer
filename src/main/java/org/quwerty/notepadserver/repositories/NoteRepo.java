@@ -5,7 +5,9 @@ import org.quwerty.notepadserver.entities.note.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface NoteRepo extends JpaRepository<Note, Integer> {
-    public Note findByNotepad(Notepad notepad);
+    public Optional<Note> findById(int id);
 }

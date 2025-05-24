@@ -2,7 +2,9 @@ package org.quwerty.notepadserver.dto;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
+@SuperBuilder
 @Getter
 @Setter
 @AllArgsConstructor

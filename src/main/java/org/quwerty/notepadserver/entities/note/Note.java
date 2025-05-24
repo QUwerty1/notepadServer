@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 import org.quwerty.notepadserver.entities.user.User;
 import org.quwerty.notepadserver.entities.user.UserNoteAccess;
@@ -51,4 +52,11 @@ public abstract class Note {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id")
     List<UserNoteAccess> accessors = new ArrayList<>();
+
+    public Note(Notepad notepad, User owner, String name) {
+        this.name = name;
+        this.notepad = notepad;
+        this.owner = owner;
+        this.accessors = List.of(new UserNoteAccess(this, owner, AccessType.Admin));
+    }
 }

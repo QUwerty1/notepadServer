@@ -16,8 +16,8 @@ paths:
             schema:
               $ref: "#/components/schemas/regStruct"
       responses:
-        "200":
-          description: ОК
+        "201":
+          description: Пользователь создан
           content:
             application/json:
               schema:
@@ -39,7 +39,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/authStruct"
-      
+
       responses:
         "200":
           description: ОК
@@ -63,7 +63,6 @@ paths:
       parameters:
         - name: user_id
           in: path
-          required: true
           schema:
             type: integer
       responses:
@@ -123,6 +122,12 @@ paths:
         - bearerAuth: [ ]
       summary: >-
         Получить всю информацию о блокноте
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema: {type: integer}
+
       responses:
         "200":
           description: OK
@@ -258,6 +263,11 @@ paths:
         Получить все заметки в блокноте
       security:
         - bearerAuth: [ ]
+      parameters:
+        - name: notepad_id
+          in: path
+          required: true
+          schema: {type: integer}
       responses:
         "200":
           description: Ок
@@ -296,7 +306,25 @@ paths:
           description: Не авторизован
         "403":
           description: Недостаточно прав
-    
+
+  /notes/{note_id}:
+    delete:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Удалить заметку
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: ОК
+        "403":
+          description: Недостаточно прав
+
     put:
       security:
         - bearerAuth: [ ]
@@ -322,25 +350,6 @@ paths:
         "403":
           description: Недостаточно прав
 
-  /notes/{note_id}:
-    delete:
-      security:
-        - bearerAuth: [ ]
-      summary: >-
-        Удалить заметку
-      parameters:
-        - name: note_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: ОК
-        "403":
-          description: Недостаточно прав
-
-
   /notes/{note_id}/users:
     get:
       security:
@@ -348,7 +357,7 @@ paths:
       summary: >-
         Получить пользователей, которым доступна заметка
       parameters:
-        - name: notepad_id
+        - name: note_id
           in: path
           required: true
           schema:
@@ -372,7 +381,7 @@ paths:
       summary: >-
         Добавить пользователя в заметку
       parameters:
-        - name: notepad_id
+        - name: note_id
           in: path
           required: true
           schema:
@@ -398,7 +407,7 @@ paths:
       summary: >-
         Изменить тип доступа пользователя к заметке
       parameters:
-        - name: notepad_id
+        - name: note_id
           in: path
           required: true
           schema:
@@ -498,9 +507,9 @@ components:
           * Админ
       type: string
       enum:
-        - reader
-        - editor
-        - admin
+        - Reader
+        - Editor
+        - Admin
 
     NotepadInfo:
       description: >-
@@ -512,12 +521,12 @@ components:
         created_at: { type: string }
         updated_at: { type: string }
         accessType: { $ref: "#/components/schemas/AccessType" }
+        note_ids: {type: array, items: {type: integer}}
       required:
-        - notepad_id
-        - notepad_name
-        - created_at
-        - updated_at
-        - notes_id
+        - notepadId
+        - notepadName
+        - createdAt
+        - updatedAt
         - accessType
 
     NoteInfo:
@@ -525,17 +534,17 @@ components:
         Информация о записке с типом доступа пользователя
       type: object
       properties:
-        notepad_id: { type: integer }
-        notepad_name: { type: string }
-        created_at: { type: string }
-        updated_at: { type: string }
+        noteId: { type: integer }
+        notepadName: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
         accessType: { $ref: "#/components/schemas/AccessType" }
         content: { $ref: "#/components/schemas/Note" }
       required:
-        - notepad_id
-        - notepad_name
-        - created_at
-        - updated_at
+        - noteId
+        - notepadName
+        - createdAt
+        - updatedAt
         - accessType
 
     NoteEvent:
@@ -560,7 +569,7 @@ components:
           items: { $ref: "#/components/schemas/NoteEvent" }
       required:
         - events
-    
+
     AbstractNote:
       description: Абстрактное содержимое заметки
       type: object
@@ -598,7 +607,7 @@ components:
       required:
         - columnNames
         - cells
-    
+
     CalendarNote:
       description: Поля календарной заметки
       type: object
@@ -634,9 +643,8 @@ components:
     UserAccess:
       type: object
       properties:
-        user_id: { type: integer }
-        access_type: { $ref: "#/components/schemas/AccessType" }
+        userId: { type: integer }
+        accessType: { $ref: "#/components/schemas/AccessType" }
       required:
-        - user_id
-        - username
-        - access_type
+        - userId
+        - accessType
