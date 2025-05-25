@@ -9,6 +9,7 @@ import org.quwerty.notepadserver.services.NoteService;
 import org.quwerty.notepadserver.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -55,6 +56,27 @@ public class NoteController {
             return ResponseEntity.notFound().build();
         } catch (ForbiddenException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @PutMapping("/{note_id}")
+    public ResponseEntity<?> updateNote(
+            @PathVariable("note_id") int noteId,
+            Principal principal
+    ) {
+        try {
+            User user = userService.findByPrincipal(principal);
+            Note note = noteService.findById(noteId, user);
+
+            noteService.updateNote(note, user);
+            return ResponseEntity.ok().build();
+
+        } catch (NoSuchNoteException e) {
+            return ResponseEntity.notFound().build();
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 }

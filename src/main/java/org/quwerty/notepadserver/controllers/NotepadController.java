@@ -2,14 +2,17 @@ package org.quwerty.notepadserver.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.quwerty.notepadserver.dto.NameDTO;
+import org.quwerty.notepadserver.dto.NoteDTO;
 import org.quwerty.notepadserver.dto.NotepadInfoDTO;
 import org.quwerty.notepadserver.dto.UserAccessDTO;
 import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.Notepad;
 import org.quwerty.notepadserver.entities.user.User;
 import org.quwerty.notepadserver.exceptions.*;
+import org.quwerty.notepadserver.repositories.NoteRepo;
 import org.quwerty.notepadserver.repositories.NotepadRepo;
 import org.quwerty.notepadserver.repositories.UserRepo;
+import org.quwerty.notepadserver.services.NoteService;
 import org.quwerty.notepadserver.services.NotepadService;
 import org.quwerty.notepadserver.services.UserService;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
@@ -28,6 +32,8 @@ public class NotepadController {
     private final NotepadService notepadService;
     private final UserService userService;
     private final UserRepo userRepo;
+    private final NoteService noteService;
+    private final NoteRepo noteRepo;
 
     @GetMapping("")
     public ResponseEntity<List<NotepadInfoDTO>> getAllByUser(Principal principal) {
@@ -220,6 +226,31 @@ public class NotepadController {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         } catch (NoSuchNotepadException e) {
             return new ResponseEntity<>("Notepad not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/{notepad_id}/notes")
+    public ResponseEntity<?> findNotepadNotes(
+            @PathVariable int notepad_id,
+            Principal principal
+    ) {
+        try {
+            User user = userService.findByPrincipal(principal);
+            Notepad notepad = notepadRepo.findNotepadById(notepad_id).orElseThrow(NoSuchNotepadException::new);
+            List<NoteDTO> notes = noteRepo
+                    .getByNotepad(notepad)
+                    .stream()
+                    .map(noteService::toNoteDTO)
+                    .toList();
+
+            return ResponseEntity.ok(notes);
+
+        } catch (UnauthorizedException | NoSuchUserException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (NoSuchNotepadException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 }

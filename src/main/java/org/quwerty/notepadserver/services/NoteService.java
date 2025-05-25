@@ -10,10 +10,12 @@ import org.quwerty.notepadserver.entities.AccessType;
 import org.quwerty.notepadserver.entities.note.*;
 import org.quwerty.notepadserver.entities.user.User;
 import org.quwerty.notepadserver.entities.user.UserNoteAccess;
+import org.quwerty.notepadserver.entities.user.UserNotepadAccess;
 import org.quwerty.notepadserver.exceptions.ForbiddenException;
 import org.quwerty.notepadserver.exceptions.NoSuchNoteException;
 import org.quwerty.notepadserver.repositories.NoteRepo;
 import org.quwerty.notepadserver.repositories.UserNoteAccessRepo;
+import org.quwerty.notepadserver.repositories.UserNotepadAccessRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class NoteService {
     private final UserNoteAccessRepo userNoteAccessRepo;
     private final NoteRepo noteRepo;
+    private final UserNotepadAccessRepo userNotepadAccessRepo;
 
     /**
      * @param user Пользователь, который удаляет
@@ -92,5 +95,24 @@ public class NoteService {
         noteDTO.setName(note.getName());
 
         return noteDTO;
+    }
+
+    /**
+     * @param note Блокнот
+     * @param user Пользователь, изменюящий блокнот
+     * @throws ForbiddenException Пользователь не является админом заметки или блокнота, к которому заметка пренадлежит
+     */
+    public void updateNote(Note note, User user) throws ForbiddenException {
+        UserNoteAccess noteAccess = userNoteAccessRepo
+                .findUserNoteAccessByUserAndNote(user, note)
+                .orElseThrow(ForbiddenException::new);
+
+        UserNotepadAccess notepadAccess = userNotepadAccessRepo
+                .findByUserAndNotepad(user, note.getNotepad())
+                .orElseThrow(ForbiddenException::new);
+
+        if ((noteAccess.getAccessType() == AccessType.Admin) || (notepadAccess.getAccessType() == AccessType.Admin)) {
+            noteRepo.save(note);
+        }
     }
 }
