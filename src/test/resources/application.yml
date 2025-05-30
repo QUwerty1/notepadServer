@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:notepadServer
+    driver-class-name: org.h2.Driver
+    username: user
+    password: passwd
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+  main:
+    allow-circular-references: true
+
+
+jwt:
+  secret: 'vX601qF6ezEEUj0O64FYgzilt1L61O7Ng2kSxfTMt0qPSJIn0Zy3SfBtg0Hq5vTu'
+  lifetime: 1d
