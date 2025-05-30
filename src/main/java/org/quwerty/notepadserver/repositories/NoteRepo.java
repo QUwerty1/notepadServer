@@ -9,5 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface NoteRepo extends JpaRepository<Note, Integer> {
-    public Optional<Note> findById(int id);
+    Optional<Note> findById(int id);
+
+    Optional<Note> findByName(String name);
+
+    Optional<Note> findByNotepadAndName(Notepad notepad, String name);
 }

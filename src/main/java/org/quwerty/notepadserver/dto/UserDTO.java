@@ -1,5 +1,6 @@
 package org.quwerty.notepadserver.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDTO {
     int id;
+    @NotNull
     String name;
+    @NotNull
     String email;
 }

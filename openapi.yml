@@ -1,9 +1,9 @@
-openapi: '3.0.3'
+openapi: '3.0.0'
 info:
   title: Notepad
-  version: '1.2'
+  version: "1.2"
 servers:
-  - url: "localhost"
+  - url: "http://localhost:8000"
 paths:
   /register:
     post:
@@ -63,6 +63,7 @@ paths:
       parameters:
         - name: user_id
           in: path
+          required: true
           schema:
             type: integer
       responses:
@@ -258,26 +259,26 @@ paths:
 
 
   /notepads/{notepad_id}/notes:
-    get:
-      summary: >-
-        Получить все заметки в блокноте
-      security:
-        - bearerAuth: [ ]
-      parameters:
-        - name: notepad_id
-          in: path
-          required: true
-          schema: {type: integer}
-      responses:
-        "200":
-          description: Ок
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/NoteInfo" }
-        "401":
-          description: Не авторизован
+    #   get:
+    #     summary: >-
+    #       Получить все заметки в блокноте
+    #     security:
+    #       - bearerAuth: [ ]
+    #     parameters:
+    #       - name: notepad_id
+    #         in: path
+    #         required: true
+    #         schema: {type: integer}
+    #     responses:
+    #       "200":
+    #         description: Ок
+    #         content:
+    #           application/json:
+    #             schema:
+    #               type: array
+    #               items: { $ref: "#/components/schemas/NoteInfo" }
+    #       "401":
+    #         description: Не авторизован
     post:
       security:
         - bearerAuth: [ ]
@@ -308,6 +309,29 @@ paths:
           description: Недостаточно прав
 
   /notes/{note_id}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: >-
+        Получить заметку
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "403":
+          description: Недостаточно прав
+        "404":
+          description: Такой заметки нет
+
     delete:
       security:
         - bearerAuth: [ ]
@@ -324,6 +348,8 @@ paths:
           description: ОК
         "403":
           description: Недостаточно прав
+        "404":
+          description: Такой заметки нет
 
     put:
       security:
@@ -349,6 +375,8 @@ paths:
           description: В этом блокноте уже существует заметка с таким названием
         "403":
           description: Недостаточно прав
+        "404":
+          description: Такой заметки нет
 
   /notes/{note_id}/users:
     get:
