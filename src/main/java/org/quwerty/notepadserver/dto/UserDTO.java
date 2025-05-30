@@ -5,8 +5,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Builder
-@Getter
-@Setter(AccessLevel.PACKAGE)
+@Data
+@EqualsAndHashCode
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDTO {
